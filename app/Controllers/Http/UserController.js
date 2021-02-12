@@ -4,6 +4,9 @@
 /** @typedef {import('@adonisjs/framework/src/Response')} Response */
 /** @typedef {import('@adonisjs/framework/src/View')} View */
 
+/** @type {typeof import('@adonisjs/lucid/src/Lucid/Model')}  */
+const User = use('App/Models/User')
+
 /**
  * Resourceful controller for interacting with users
  */
@@ -17,19 +20,10 @@ class UserController {
    * @param {Response} ctx.response
    * @param {View} ctx.view
    */
-  async index ({ request, response, view }) {
-  }
+  async index({ request, response, view }) {
+    const users = await User.all()
 
-  /**
-   * Render a form to be used for creating a new user.
-   * GET users/create
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async create ({ request, response, view }) {
+    return response.json(users)
   }
 
   /**
@@ -40,7 +34,20 @@ class UserController {
    * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async store ({ request, response }) {
+  async store({ request, response }) {
+    const { username, email, password } = request.all()
+
+    if (username && email && password) {
+      if (await User.findBy('username', username))
+        return response.json({ message: 'Error, Username already exist.' })
+      else if (await User.findBy('email', email))
+        return response.json({ message: 'Error, Email already exist.' })
+      else {
+        const user = await User.create({ username, email, password })
+
+        return response.json(user)
+      }
+    } else return response.json({ message: 'Error, you should to complete the from.' })
   }
 
   /**
@@ -52,19 +59,10 @@ class UserController {
    * @param {Response} ctx.response
    * @param {View} ctx.view
    */
-  async show ({ params, request, response, view }) {
-  }
+  async show({ params, request, response, view }) {
+    const user = await User.find(params.id)
 
-  /**
-   * Render a form to update an existing user.
-   * GET users/:id/edit
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async edit ({ params, request, response, view }) {
+    return response.json(user)
   }
 
   /**
@@ -75,7 +73,26 @@ class UserController {
    * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async update ({ params, request, response }) {
+  async update({ params, request, response }) {
+    const user = await User.find(params.id)
+
+    if (user) {
+      const { username, email, password } = request.all()
+
+      if (username && (await User.findBy('username', username)))
+        return response.json({ message: 'Error, username already exist.' })
+      else if (email && (await User.findBy('email', email)))
+        return response.json({ message: 'Error, email already exist.' })
+      else {
+        user.username = username
+        user.email = email
+        user.password = password
+
+        await user.save()
+      }
+
+      return response.json(user)
+    } else return response.json({ message: 'Error, User not exist.' })
   }
 
   /**
@@ -86,7 +103,12 @@ class UserController {
    * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async destroy ({ params, request, response }) {
+  async destroy({ params, request, response }) {
+    const user = await User.find(params.id)
+
+    await user.delete()
+
+    return response.json({ message: `User ${user.username} was deleted.` })
   }
 }
 

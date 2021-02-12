@@ -18,12 +18,10 @@ const { route } = require('@adonisjs/framework/src/Route/Manager')
 /** @type {typeof import('@adonisjs/framework/src/Route/Manager')} */
 const Route = use('Route')
 
-Route.get('/', () => {
-  return { greeting: 'Hello world in JSON' }
-})
-
 Route.group(() => {
-  Route.get('/', ({request, response}) => {
-    return response.json({message: "Hola mundo!"})
-  })
+  Route.get('/', 'UserController.index')
+  Route.get('/:id', 'UserController.show')
+  Route.post('/', 'UserController.store')
+  Route.put('/:id', 'UserController.update')
+  Route.delete('/:id', 'UserController.destroy')
 }).prefix('users')
